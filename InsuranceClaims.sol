@@ -4,6 +4,9 @@ pragma solidity ^0.8.20;
 
 contract InsuranceClaims {
 
+    // Address of the insurance company
+    address public insurer;
+
     // Store the total number of submitted claims
     uint256 public claimCount;
 
@@ -26,6 +29,26 @@ contract InsuranceClaims {
         address claimant,
         uint256 amount
     );
+
+    // Event triggered when a claim status changes
+    event ClaimStatusUpdated(
+        uint256 claimId,
+        string newStatus
+    );
+
+    // Set the insurance company when deploying the contract
+    constructor() {
+        insurer = msg.sender;
+    }
+
+    // Restrict certain functions to the insurance company
+    modifier onlyInsurer() {
+        require(
+            msg.sender == insurer,
+            "Only the insurer can perform this action"
+        );
+        _;
+    }
 
     // Submit a new insurance claim
     function submitClaim(
@@ -68,6 +91,62 @@ contract InsuranceClaims {
             claimCount,
             msg.sender,
             _amount
+        );
+    }
+
+    // Approve an insurance claim
+    function approveClaim(
+        uint256 _claimId
+    ) public onlyInsurer {
+
+        // Check whether the claim exists
+        require(
+            _claimId > 0 && _claimId <= claimCount,
+            "Claim does not exist"
+        );
+
+        // Check whether the claim is still pending
+        require(
+            keccak256(bytes(claims[_claimId].status)) ==
+            keccak256(bytes("Pending")),
+            "Claim has already been processed"
+        );
+
+        // Update the claim status
+        claims[_claimId].status = "Approved";
+
+        // Record the status change
+        emit ClaimStatusUpdated(
+            _claimId,
+            "Approved"
+        );
+    }
+
+    // Reject an insurance claim
+    function rejectClaim(
+        uint256 _claimId
+    ) public onlyInsurer {
+
+        // Check whether the claim exists
+        require(
+            _claimId > 0 && _claimId <= claimCount,
+            "Claim does not exist"
+        );
+
+        // Check whether the claim is still pending
+        require(
+            keccak256(bytes(claims[_claimId].status)) ==
+            keccak256(bytes("Pending")),
+            "Claim has already been processed"
+        );
+
+        // Update the claim status
+        claims[_claimId].status = "Rejected";
+
+        // Record the status change
+        emit ClaimStatusUpdated(
+            _claimId,
+            "Rejected"
         );
     }
 
