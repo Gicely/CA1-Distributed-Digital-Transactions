@@ -1,4 +1,3 @@
-
 # This code is to automate blockchain connection and deployment
 
 # -e stops the programm when has error
